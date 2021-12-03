@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 from random import randint,choice,shuffle
 import pyperclip
+import json
 
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 def gen_password():
@@ -31,6 +32,12 @@ def gen_password():
 
 # ---------------------------- SAVE PASSWORD ------------------------------- #
 def add_to_file():
+    new_data={
+        website_entry.get():{
+            "email": email_entry.get(),
+            "password": password_entry.get()
+        }
+    }
     # checking if all the fields are filed or not
     if website_entry.get() == '' or email_entry.get() == '' or password_entry.get() == '':
         messagebox.showerror(message="Some field(s) empty!")
@@ -38,15 +45,35 @@ def add_to_file():
     else:
         if_yes=messagebox.askokcancel(message="The following entries will be added to list")
         if if_yes:
-            data_file = open("data.txt", mode="a")
-            data_file.write(
-                f"{website_entry.get()} | {email_entry.get()} |{password_entry.get()} \n")
-            data_file.close()
+            try:
+                data_file = open("data.json", mode="r")
+                # loading the data
+                data=json.load(data_file)
+                # updating the data
+                data.update(new_data)
+            except FileNotFoundError:
+                data_file=open("data.json",mode="w")
+                json.dump(new_data,data_file,indent=4)
+            else:
+                data_file=open("data.json",mode="w")
+                # writing the data
+                json.dump(data,data_file,indent=4)
+                data_file.close()
             
         
         website_entry.delete(0, END)
         password_entry.delete(0, END)
         website_entry.focus()
+
+def search():
+    try:
+        data_file=open("data.json",mode="r")
+        data=json.load(data_file)
+        website=website_entry.get()
+        if website in data:
+            messagebox.showinfo(message=f"Email: {data[website]['email']} \n Password: {data[website]['password']}")
+    except:
+        messagebox.showinfo(message="No existing record")
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -71,9 +98,9 @@ password_name = Label(text="Password: ")
 password_name.grid(row=3, column=0)
 
 # entries
-website_entry = Entry(width=35)
+website_entry = Entry(width=16)
 website_entry.focus()
-website_entry.grid(row=1, column=1, columnspan=2)
+website_entry.grid(row=1, column=1)
 
 email_entry = Entry(width=35)
 email_entry.insert(0, "2pulkit2@gmail.com")
@@ -85,6 +112,9 @@ password_entry.grid(row=3, column=1)
 # buttons
 generate_password = Button(text="Generate Password",command=gen_password)
 generate_password.grid(row=3, column=2)
+
+search=Button(text="Search",command=search)
+search.grid(row=1,column=2)
 
 add = Button(text="ADD", width=36, command=add_to_file)
 add.config(pady=10)
